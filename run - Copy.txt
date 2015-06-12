@@ -1,0 +1,31 @@
+@echo off
+echo /////////////////////////////////////////////////////
+echo Hello~~ This is "TD ANALYZER TOOL". Hopefully, this will do the work for MM
+echo so we can all go home on time :) No more staying late because of the reports :p
+echo ////////////////////////////////////////////////////
+echo [Limtation / Warning:]
+echo Due to its logic, this program compares only the first 6 characters of each model name. 
+echo If the first 6 characters of the model name are same, it is considered to be the same model.
+echo Due to this, it may produce wrong result. So please check the output as necessary when using this tool.
+echo ////////////////////////////////////////////////////
+echo [Example 1] - This tool will work in this case.
+echo Model name existing on TD is "LG-H810_L_USA_AT&T(USA)_QE" &  "LG-H810_L_USA_AT&T(USA)_MR". 
+echo First 6 chracters are the SAME, "LG-H81".
+echo This will produce the CORRECT result. 
+echo ////////////////////////////////////////////////////
+echo [Example 2] This tool will NOT work in this case.
+echo Existing model name on TD is "LG-H810_L_USA..." & "LGH810_L_USA..."
+echo First 6 characters are DIFFERENT. "LG-H81" VS "LGH810".
+echo This will produce 2 output tables. One for "LG-H81" and "LGH810"
+echo ////////////////////////////////////////////////////
+echo.
+echo Tip: Press "Tab" key to find desired input file that is in this current folder.
+echo.
+echo Please enter input excel file names with its extension. If you have multiple input files, you can enter them with a space in between. 
+echo (ex: H810_issues.xls H950_issues.xls) 
+set /p filename=""
+echo
+javac -cp jxl.jar; nvg/mm/td/ExtractData.java
+java -cp jxl.jar;. nvg.mm.td.ExtractData %filename%
+
+pause
