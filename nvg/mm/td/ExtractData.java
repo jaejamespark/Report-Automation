@@ -47,15 +47,15 @@ public class ExtractData {
 	 */
 		
 		int inputCounter = 0;
-		//for (inputCounter = 0; inputCounter < args.length; ++inputCounter){
-			//sSystem.out.println(args[inputCounter]);
+		for (inputCounter = 0; inputCounter < args.length; ++inputCounter){
+			System.out.println(args[inputCounter]);
 			
 		
 			try {
 				// Read a workbook from a file
-				//Workbook workbook = Workbook.getWorkbook(new File(args[inputCounter]));
-				Workbook workbook = Workbook.getWorkbook(new File("all_issues.xls"));
-				
+				Workbook workbook = Workbook.getWorkbook(new File(args[inputCounter]));
+				//Workbook workbook = Workbook.getWorkbook(new File("all_issues.xls"));
+
 				// Read a sheet from the workbook
 				Sheet sheet = workbook.getSheet(0);
 				
@@ -138,7 +138,7 @@ public class ExtractData {
 						String nextModelname = issuesList.get(nextModelCounter).getModel();
 						
 						//System.out.println("Previous value " + issuesList.get(nextModelCounter).isMatched());
-						if (issuesList.get(nextModelCounter).isMatched() == false && rootModelname.regionMatches(0, nextModelname, 0, 6)) {
+						if (issuesList.get(nextModelCounter).isMatched() == false && rootModelname.regionMatches(0, nextModelname, 0, 7)) {
 							issuesList.get(nextModelCounter).setModelIdentifier(modelIdentifier);
 							issuesList.get(nextModelCounter).setMatched(true);
 						}
@@ -174,6 +174,13 @@ public class ExtractData {
 				
 				// Linkedlist to hold list of Detected in Versions.
 				LinkedList <String>verFinalList = null;
+				
+				//Put verPriorityList & verStatusList LL into this LL.
+				LinkedList<LinkedList<DetectedVersionCounter>> ModelVerPrioList = new LinkedList<LinkedList<DetectedVersionCounter>>();
+				LinkedList<LinkedList<Status>> ModelVerStatList = new LinkedList<LinkedList<Status>>();
+				
+				// # of detected in version for each model
+				ArrayList <Integer >numOfDetVerForEachModel = new ArrayList <Integer>();
 				
 				// Linkedlist to hold list of priority A, B, C counter for each detected in version
 				LinkedList <DetectedVersionCounter> verPriorityList = new LinkedList<DetectedVersionCounter>();
@@ -238,6 +245,9 @@ public class ExtractData {
 						verPriorityList.add(detVerPriorityCounter);
 						verStatusList.add(detVerStatusCounter);
 					}
+					ModelVerPrioList.add(verPriorityList);
+					ModelVerStatList.add(verStatusList);
+					numOfDetVerForEachModel.add(verFinalList.size());
 					
 					// Print # of Priority A, B, C for each detected in version.
 					for (int verCounter = 0; verCounter < verPriorityList.size(); ++verCounter){
@@ -255,6 +265,7 @@ public class ExtractData {
 						int notB = verStatusList.get(verCounter).getbNotaBug();
 						int notC = verStatusList.get(verCounter).getcNotaBug();
 						int notTotal = notA + notB + notC;
+
 						
 						System.out.println("M_ID " + a + " V_ID " + b + " VerName " + c + " #A " + d + " #B " + e + " #C " + f + " NotaBugA " + notA + " NotaBugB " + notB + " NotaBugC " + notC + " NotaBugTot " + notTotal);				
 					}
@@ -322,11 +333,115 @@ public class ExtractData {
 				
 				
 				// PRINT THE RESULTS TO EXCEL
-				WritableWorkbook workbookOutput = Workbook.createWorkbook(new File (inputCounter + "_output.xls"));
-							
+				//WritableWorkbook workbookOutput = Workbook.createWorkbook(new File (inputCounter + "_output.xls"));
+				WritableWorkbook workbookOutput = Workbook.createWorkbook(new File ("OUTPUT_" + args[inputCounter]));
+				
 				for (int statusCounter = 0; statusCounter < modelIdentifier - 1; ++statusCounter){
 					
-					WritableSheet sheetOutput = workbookOutput.createSheet("tab " + statusCounter, statusCounter);
+					//WritableSheet sheetOutput = workbookOutput.createSheet("tab " + statusCounter, statusCounter);
+					WritableSheet sheetOutput = workbookOutput.createSheet(ListModelName.get(statusCounter).substring(0, 7), statusCounter);
+					
+					String LastDetInVerName = null;
+					int sumRow = 0;
+					LinkedList<DetectedVersionCounter> detInVerNameList = ModelVerPrioList.get(statusCounter);
+					LinkedList<Status> detInVerStatusList = ModelVerStatList.get(statusCounter);
+					for (int verCounter = 0; verCounter < numOfDetVerForEachModel.get(statusCounter); ++verCounter){
+						String detInVerName = detInVerNameList.get(verCounter).getDetectedInVer();
+						//bb = numOfDetVerForEachModel.get(statusCounter);
+						int detInVerA = detInVerNameList.get(verCounter).getaMajor();
+						int detInVerB = detInVerNameList.get(verCounter).getbMinor();
+						int detInVerC = detInVerNameList.get(verCounter).getcComment();
+						
+						// Print # of # of not a bug for each detected in version. 
+						int notBugA = detInVerStatusList.get(verCounter).getaNotaBug();
+						int notBugB = detInVerStatusList.get(verCounter).getbNotaBug();
+						int notBugC = detInVerStatusList.get(verCounter).getcNotaBug();
+						int notBugTotal = notBugA + notBugB + notBugC;
+						
+						// save the name of last det. in version using the last counter.
+						LastDetInVerName = detInVerNameList.get(verCounter).getDetectedInVer();
+						
+						
+						// Print the result to excel
+						Label detInVerNameLabel = new Label (1, 28 + verCounter, detInVerName);
+						sheetOutput.addCell(detInVerNameLabel);
+						
+						Number detInVerNameALabel = new Number (2, 28 + verCounter, detInVerA);
+						sheetOutput.addCell(detInVerNameALabel);
+						
+						Number detInVerNameBLabel = new Number (3, 28 + verCounter, detInVerB);
+						sheetOutput.addCell(detInVerNameBLabel);
+						
+						Number detInVerNameCLabel = new Number (4, 28 + verCounter, detInVerC);
+						sheetOutput.addCell(detInVerNameCLabel);
+						
+						sumRow = verCounter + 29;
+						Formula sum = new Formula(5, 28 + verCounter, "SUM(C" + sumRow + ":" + "E" + sumRow + ")");
+						sheetOutput.addCell(sum);
+						
+						
+						Label detInVerNameLabelKPI = new Label (7, 28 + verCounter, detInVerName);
+						sheetOutput.addCell(detInVerNameLabelKPI);
+						
+						Number NotaBugTotLabel = new Number (8, 28 + verCounter, notBugTotal);
+						sheetOutput.addCell(NotaBugTotLabel);
+	
+						Formula RealBugTot = new Formula (9, 28 + verCounter, "F" + sumRow + "-" + "I" + sumRow);
+						sheetOutput.addCell(RealBugTot);						
+						
+						System.out.println(" VerName " + detInVerName + " #A " + detInVerA + " #B " + detInVerB + " #C " + detInVerC +  "NotaBugTot " + notBugTotal);				
+					}
+				
+					Label ReportTitle2 = new Label (1, 26, "[ WEEKLY REPORT DATA ]");
+					sheetOutput.addCell(ReportTitle2);
+					
+					Label detInVerNameLabelTitle = new Label (1, 27, "Detected in Version");
+					sheetOutput.addCell(detInVerNameLabelTitle);
+					
+					Label detInVerNameALabelTitle = new Label (2, 27, "A-Major");
+					sheetOutput.addCell(detInVerNameALabelTitle);
+					
+					Label detInVerNameBLabelTitle = new Label (3, 27, "B-Minor");
+					sheetOutput.addCell(detInVerNameBLabelTitle);
+					
+					Label detInVerNameCLabelTitle = new Label (4, 27, "C-Comment");
+					sheetOutput.addCell(detInVerNameCLabelTitle);
+					
+					Label detInVerNameTotLabelTitle = new Label (5, 27, "Total");
+					sheetOutput.addCell(detInVerNameTotLabelTitle);
+	
+					
+					Formula VerMajorTot = new Formula (2, sumRow, "SUM(C29:C" + sumRow +")");
+					sheetOutput.addCell(VerMajorTot);
+					
+					Formula VerMinorTot = new Formula (3, sumRow, "SUM(D29:D" + sumRow +")");
+					sheetOutput.addCell(VerMinorTot);
+					
+					Formula VerCommentTot = new Formula (4, sumRow, "SUM(E29:E"  + sumRow +")");
+					sheetOutput.addCell(VerCommentTot);
+					
+					Formula VerTotalTot = new Formula (5, sumRow, "SUM(F29:F"  + sumRow +")");
+					sheetOutput.addCell(VerTotalTot);
+
+					
+					
+					Label TitleKPI = new Label (7, 26, "[ KPI DATA ]");
+					sheetOutput.addCell(TitleKPI);
+					
+					Label detInVerNameLabelTitleKPI = new Label (7, 27, "Detected in Version");
+					sheetOutput.addCell(detInVerNameLabelTitleKPI);
+					
+					Label NotaBugTotLabel = new Label (8, 27, "Closed Not a Bug Total");
+					sheetOutput.addCell(NotaBugTotLabel);
+					
+					Label RealBugTotLabel = new Label (9, 27, "Real Bug Total");
+					sheetOutput.addCell(RealBugTotLabel);
+					
+					Formula NotaBugTotalTot = new Formula (8, sumRow, "SUM(I29:I"  + sumRow +")");
+					sheetOutput.addCell(NotaBugTotalTot);
+					
+					Formula RealBugTotalTot = new Formula (9, sumRow, "SUM(J29:J"  + sumRow +")");
+					sheetOutput.addCell(RealBugTotalTot);
 					
 					// PRINT ALL A-MAJOR ISSUES
 					System.out.println("FOR THIS MODEL, " + ListModelName.get(statusCounter) + ".......");
@@ -393,11 +508,13 @@ public class ExtractData {
 					
 					
 					
-					//Print to excel
-					
-					Label ModelName = new Label (1, 1, ListModelName.get(statusCounter));
+					//Print to excel					
+					Label ModelName = new Label (1, 1, "Report generated for this model, " + ListModelName.get(statusCounter));
 					sheetOutput.addCell(ModelName);
-									
+					
+					Label ReportTitle1 = new Label (1, 16, "[ WEEKLY REPORT DATA + NVG TEST REPORT DATA ]");
+					sheetOutput.addCell(ReportTitle1);
+					
 					Label NewinCurrentBuild = new Label (1, 18, "New in Current Build");
 					sheetOutput.addCell(NewinCurrentBuild);
 					
@@ -409,6 +526,12 @@ public class ExtractData {
 						
 						Number NewinCurrentBuildC = new Number (4, 18, finalVerCList.get(statusCounter));
 						sheetOutput.addCell(NewinCurrentBuildC);
+						
+						Formula NewinCurrentBuildTot = new Formula (5, 18, "SUM(C19:E19)");
+						sheetOutput.addCell(NewinCurrentBuildTot);
+						
+						Label LastDetInVerNameLabel = new Label (6, 18, "<- This calculation was made assuming that " + LastDetInVerName + " is the CURRENT build");
+						sheetOutput.addCell(LastDetInVerNameLabel);
 					
 					Label TotalOpen = new Label (1, 19, "Total Open");
 					sheetOutput.addCell(TotalOpen);
@@ -421,6 +544,9 @@ public class ExtractData {
 						
 						Number TotalOpenC = new Number (4, 19, numOpenCIssues);
 						sheetOutput.addCell(TotalOpenC);
+						
+						Formula TotalOpenTot = new Formula (5, 19, "SUM(C20:E20)");
+						sheetOutput.addCell(TotalOpenTot);
 					
 					Label TotalClosed = new Label (1, 20, "Total Closed");
 					sheetOutput.addCell(TotalClosed);
@@ -433,6 +559,9 @@ public class ExtractData {
 						
 						Number TotalClosedC = new Number (4, 20, listStatus.get(statusCounter).getcClosed());
 						sheetOutput.addCell(TotalClosedC);
+						
+						Formula TotalClosedTot = new Formula (5, 20, "SUM(C21:E21)");
+						sheetOutput.addCell(TotalClosedTot);
 					
 					Label TotalClosedDef = new Label (1, 21, "Total Closed Deferred");
 					sheetOutput.addCell(TotalClosedDef);
@@ -445,6 +574,9 @@ public class ExtractData {
 						
 						Number TotalClosedDefC = new Number (4, 21, listStatus.get(statusCounter).getcDeferred());
 						sheetOutput.addCell(TotalClosedDefC);
+						
+						Formula TotalClosedDefTotal = new Formula (5, 21, "SUM(C22:E22)");
+						sheetOutput.addCell(TotalClosedDefTotal);
 					
 					Label TotalClosedWith = new Label (1, 22, "Total Closed Withdrawn");
 					sheetOutput.addCell(TotalClosedWith);
@@ -457,6 +589,9 @@ public class ExtractData {
 						
 						Number TotalClosedWithC = new Number (4, 22, listStatus.get(statusCounter).getcWithdrawn());
 						sheetOutput.addCell(TotalClosedWithC);
+						
+						Formula TotalClosedWithTotal = new Formula (5, 22, "SUM(C23:E23)");
+						sheetOutput.addCell(TotalClosedWithTotal);
 					
 					Label TotalClosedNot = new Label (1, 23, "Total Closed Not a bug");
 					sheetOutput.addCell(TotalClosedNot);
@@ -469,6 +604,9 @@ public class ExtractData {
 						
 						Number TotalClosedNotC = new Number (4, 23, listStatus.get(statusCounter).getcNotaBug());
 						sheetOutput.addCell(TotalClosedNotC);
+						
+						Formula TotalClosedNotTot = new Formula (5, 23, "SUM(C24:E24)");
+						sheetOutput.addCell(TotalClosedNotTot);
 				
 					
 					Label Major = new Label (2, 17, "Major");
@@ -479,30 +617,25 @@ public class ExtractData {
 					
 					Label Comment = new Label (4, 17, "Comment");
 					sheetOutput.addCell(Comment);
-										
 					
-					for (int verCounter = 0; verCounter < verPriorityList.size(); ++verCounter){
-						String detInVerName = verPriorityList.get(verCounter).getDetectedInVer();
-						int detInVerA = verPriorityList.get(verCounter).getaMajor();
-						int detInVerB = verPriorityList.get(verCounter).getbMinor();
-						int detInVerC = verPriorityList.get(verCounter).getcComment();
-						
-						// Print # of # of not a bug for each detected in version. 
-						int notBugA = verStatusList.get(verCounter).getaNotaBug();
-						int notBugB = verStatusList.get(verCounter).getbNotaBug();
-						int notBugC = verStatusList.get(verCounter).getcNotaBug();
-						int notBugTotal = notBugA + notBugB + notBugC;
-						
-						Label detInVerNameLabel = new Label (5, 19 + verCounter, detInVerName);
-						sheetOutput.addCell(detInVerNameLabel);
-								
-						System.out.println(" VerName " + detInVerName + " #A " + detInVerA + " #B " + detInVerB + " #C " + detInVerC +  "NotaBugTot " + notBugTotal);				
-						
-					}
-
+					Label Total = new Label (5, 17, "Total");
+					sheetOutput.addCell(Total);
+					
+					Formula MajorTot = new Formula (2, 24, "SUM(C20:C24)");
+					sheetOutput.addCell(MajorTot);
+					
+					Formula MinorTot = new Formula (3, 24, "SUM(D20:D24)");
+					sheetOutput.addCell(MinorTot);
+					
+					Formula CommentTot = new Formula (4, 24, "SUM(E20:E24)");
+					sheetOutput.addCell(CommentTot);
+					
+					Formula TotalTot = new Formula (5, 24, "SUM(F20:F24)");
+					sheetOutput.addCell(TotalTot);
 					
 
-				} // end of for loop
+			}
+				// end of for loop
 				
 				// Print result to excel			
 					
@@ -521,6 +654,6 @@ public class ExtractData {
 			}
 			
 		}
-	//}
+	}
 	
 }
