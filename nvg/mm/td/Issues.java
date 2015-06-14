@@ -6,6 +6,8 @@ public class Issues {
 	private	String status;
 	private String priority;
 	private String detectedVer;
+	private String summary;
+	private String reproducible;
 	private int modelIdentifier;
 	private int DetVerIdentifier;
 	private boolean isMatched;
@@ -20,6 +22,8 @@ public class Issues {
 		detectedVer = null;
 		modelIdentifier = 0;
 		DetVerIdentifier = 0;
+		summary = null;
+		reproducible = null;
 		isMatched = false;
 		isMatchedVer = false;
 	}
@@ -95,9 +99,21 @@ public class Issues {
 	public void setMatchedVer(boolean isMatchedVer) {
 		this.isMatchedVer = isMatchedVer;
 	}
-	
-	
-		
-	
+
+	public String getSummary() {
+		return summary;
+	}
+
+	public void setSummary(String summary) {
+		this.summary = summary;
+	}
+
+	public String getReproducible() {
+		return reproducible;
+	}
+
+	public void setReproducible(String reproducible) {
+		this.reproducible = reproducible;
+	}
 	
 }

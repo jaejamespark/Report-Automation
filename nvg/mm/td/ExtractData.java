@@ -4,25 +4,19 @@ package nvg.mm.td;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
 import java.util.Set;
 import java.util.TreeSet;
 
 import jxl.*;
 import jxl.read.biff.BiffException;
-import jxl.biff.RecordData;
 import jxl.write.*;
 import jxl.write.Number;
 import jxl.write.biff.RowsExceededException;
 
 
 public class ExtractData {
-	@SuppressWarnings("null")
 	public static void main(String[] args) throws RowsExceededException, WriteException {
 		
 		/*
@@ -45,6 +39,11 @@ public class ExtractData {
 		Source:
 		http://stackoverflow.com/questions/8949413/how-to-run-java-program-in-terminal-with-external-library-jar 
 	 */
+		// Get file path. This will be used for Input/Output folder path
+		String currentDirectory = null;
+		File file = new File(".");
+		currentDirectory = file.getAbsolutePath();
+		String inputDirectory = currentDirectory + "/Input/";
 		
 		int inputCounter = 0;
 		for (inputCounter = 0; inputCounter < args.length; ++inputCounter){
@@ -53,8 +52,8 @@ public class ExtractData {
 		
 			try {
 				// Read a workbook from a file
-				Workbook workbook = Workbook.getWorkbook(new File(args[inputCounter]));
-				//Workbook workbook = Workbook.getWorkbook(new File("all_issues.xls"));
+				Workbook workbook = Workbook.getWorkbook(new File(inputDirectory, args[inputCounter]));
+				//Workbook workbook = Workbook.getWorkbook(new File("all_issues.xls")); // For testing only
 
 				// Read a sheet from the workbook
 				Sheet sheet = workbook.getSheet(0);
@@ -64,6 +63,7 @@ public class ExtractData {
 				
 				// Find columns of TD Num, Model, Status, Priority, Detected in version
 				int tdNum = 0, colModel = 0, colStatus = 0, colPriority = 0, colDetectVer = 0;
+				int colSummary = 0, colReproducible = 0;
 				
 				for (int cols = 0; cols < numCols; ++cols) {
 					Cell cellCols = sheet.getCell(cols, 0);
@@ -95,6 +95,14 @@ public class ExtractData {
 						colDetectVer = cols;
 						//System.out.println("Detected in Version is at col " + colDetectVer);
 					}
+				
+					if (label.equals("Summary")) {
+						colSummary = cols;
+					}
+					
+					if (label.equals("Reproducible")) {
+						colReproducible = cols;
+					}
 				}
 	
 				// put each row's info into issues class then issuesList
@@ -121,8 +129,15 @@ public class ExtractData {
 					Cell cellDetectedVer = sheet.getCell(colDetectVer, rows);
 					issue.setDetectedVer(cellDetectedVer.getContents());
 					
+					Cell CellSummary = sheet.getCell(colSummary, rows);
+					issue.setSummary(CellSummary.getContents());
+					
+					Cell CellReproducible = sheet.getCell(colReproducible, rows);
+					issue.setReproducible(CellReproducible.getContents());
+					
 					issuesList.add(issue);
 				} //end of for loop
+				
 				
 				// identify model using model identifier
 				int modelIdentifier = 1;
@@ -161,6 +176,7 @@ public class ExtractData {
 						break;
 					}	
 			} //end of for loop
+				
 				
 				// Arraylist to collect New in current build issue count
 				ArrayList<Integer> finalVerAList = new ArrayList<Integer>();
@@ -212,7 +228,6 @@ public class ExtractData {
 						}
 					}
 					
-					
 					// convert SET -> LinkedList
 					verFinalList = new LinkedList<String>();
 					verFinalList.addAll(set);
@@ -249,6 +264,7 @@ public class ExtractData {
 					ModelVerStatList.add(verStatusList);
 					numOfDetVerForEachModel.add(verFinalList.size());
 					
+					
 					// Print # of Priority A, B, C for each detected in version.
 					for (int verCounter = 0; verCounter < verPriorityList.size(); ++verCounter){
 						int a = verPriorityList.get(verCounter).getModelIdentifier();
@@ -265,8 +281,7 @@ public class ExtractData {
 						int notB = verStatusList.get(verCounter).getbNotaBug();
 						int notC = verStatusList.get(verCounter).getcNotaBug();
 						int notTotal = notA + notB + notC;
-
-						
+	
 						System.out.println("M_ID " + a + " V_ID " + b + " VerName " + c + " #A " + d + " #B " + e + " #C " + f + " NotaBugA " + notA + " NotaBugB " + notB + " NotaBugC " + notC + " NotaBugTot " + notTotal);				
 					}
 
@@ -331,23 +346,80 @@ public class ExtractData {
 				
 				
 				
-				
 				// PRINT THE RESULTS TO EXCEL
-				//WritableWorkbook workbookOutput = Workbook.createWorkbook(new File (inputCounter + "_output.xls"));
-				WritableWorkbook workbookOutput = Workbook.createWorkbook(new File ("OUTPUT_" + args[inputCounter]));
 				
+				//WritableWorkbook workbookOutput = Workbook.createWorkbook(new File ("output.xls")); // For testing only
+				
+
+				String outputDirectory = currentDirectory + "/Output/";
+				WritableWorkbook workbookOutput = Workbook.createWorkbook(new File (outputDirectory, "OUTPUT_" + args[inputCounter]));  // use this when running command window
+			
 				for (int statusCounter = 0; statusCounter < modelIdentifier - 1; ++statusCounter){
 					
 					//WritableSheet sheetOutput = workbookOutput.createSheet("tab " + statusCounter, statusCounter);
 					WritableSheet sheetOutput = workbookOutput.createSheet(ListModelName.get(statusCounter).substring(0, 7), statusCounter);
 					
+
+					// Generate open issue list
+					int rowCounter = 0;
+					for (int issuesCounter = 0; issuesCounter < issuesList.size(); ++issuesCounter){
+						if (issuesList.get(issuesCounter).getModelIdentifier() == statusCounter + 1) {
+							String statusOpen = issuesList.get(issuesCounter).getStatus();
+							if (statusOpen.equals("New") || statusOpen.equals("Demand") || statusOpen.equals("ReOpen") || statusOpen.equals("Open") || statusOpen.equals("Assigned") || statusOpen.equals("Fixed")) {
+								String tdNumOpen = issuesList.get(issuesCounter).getTdNum();
+								String priorityOpen = issuesList.get(issuesCounter).getPriority();
+								String summaryOpen = issuesList.get(issuesCounter).getSummary();
+								String reproOpen = issuesList.get(issuesCounter).getReproducible();
+								
+								Label tdNumOpenLabel = new Label (15, 28 + rowCounter, tdNumOpen);
+								sheetOutput.addCell(tdNumOpenLabel);
+								
+								Label priorityOpenLabel = new Label (16, 28 + rowCounter, priorityOpen);
+								sheetOutput.addCell(priorityOpenLabel);
+								
+								Label statusOpenLabel = new Label (17, 28 + rowCounter, statusOpen);
+								sheetOutput.addCell(statusOpenLabel);
+								
+								Label summaryOpenLabel = new Label (18, 28 + rowCounter, summaryOpen);
+								sheetOutput.addCell(summaryOpenLabel);
+								
+								Label reproOpenLabel = new Label (19, 28 + rowCounter, reproOpen);
+								sheetOutput.addCell(reproOpenLabel);
+								
+								rowCounter += 1;
+							}
+							
+						}
+					}
+					
+					Label openIssuesTitle = new Label (15, 26, "[ OPEN ISSUES ]");
+					sheetOutput.addCell(openIssuesTitle);
+					
+					Label tdNumOpenTitle = new Label (15, 27, "Defect ID");
+					sheetOutput.addCell(tdNumOpenTitle);
+					
+					Label priorityOpenTitle = new Label (16, 27, "Priority");
+					sheetOutput.addCell(priorityOpenTitle);
+					
+					Label statusOpenTitle = new Label (17, 27, "Status");
+					sheetOutput.addCell(statusOpenTitle);
+					
+					Label summaryOpenTitle = new Label (18, 27, "Summary");
+					sheetOutput.addCell(summaryOpenTitle);
+					
+					Label reproOpenTitle = new Label (19, 27, "Reproducible");
+					sheetOutput.addCell(reproOpenTitle);
+					
+					
+					
+					
+					// KPI Calculation
 					String LastDetInVerName = null;
 					int sumRow = 0;
 					LinkedList<DetectedVersionCounter> detInVerNameList = ModelVerPrioList.get(statusCounter);
 					LinkedList<Status> detInVerStatusList = ModelVerStatList.get(statusCounter);
 					for (int verCounter = 0; verCounter < numOfDetVerForEachModel.get(statusCounter); ++verCounter){
 						String detInVerName = detInVerNameList.get(verCounter).getDetectedInVer();
-						//bb = numOfDetVerForEachModel.get(statusCounter);
 						int detInVerA = detInVerNameList.get(verCounter).getaMajor();
 						int detInVerB = detInVerNameList.get(verCounter).getbMinor();
 						int detInVerC = detInVerNameList.get(verCounter).getcComment();
