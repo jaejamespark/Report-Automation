@@ -2,9 +2,9 @@ package nvg.mm.td;
 
 public class Status {
 
-	private int aClosed, aWithdrawn, aDeferred, aNotaBug, aFixed, aAssigned, aOpen, aReOpen, aDemand, aNew;
-	private int bClosed, bWithdrawn, bDeferred, bNotaBug, bFixed, bAssigned, bOpen, bReOpen, bDemand, bNew;
-	private int cClosed, cWithdrawn, cDeferred, cNotaBug, cFixed, cAssigned, cOpen, cReOpen, cDemand, cNew;	
+	private int aClosed, aWithdrawn, aDeferred, aNotaBug, aFixed, aAssigned, aOpen, aReOpen, aDemand, aNew, aRnDRejected;
+	private int bClosed, bWithdrawn, bDeferred, bNotaBug, bFixed, bAssigned, bOpen, bReOpen, bDemand, bNew, bRnDRejected;
+	private int cClosed, cWithdrawn, cDeferred, cNotaBug, cFixed, cAssigned, cOpen, cReOpen, cDemand, cNew, cRnDRejected;	
 
 	public Status(){
 		aClosed = 0; 
@@ -17,6 +17,7 @@ public class Status {
 		aReOpen = 0; 
 		aDemand = 0;
 		aNew = 0;
+		aRnDRejected = 0;
 		
 		bClosed = 0;
 		bWithdrawn = 0;
@@ -28,6 +29,7 @@ public class Status {
 		bReOpen = 0;
 		bDemand = 0;
 		bNew = 0;
+		bRnDRejected = 0;
 		
 		cClosed = 0;
 		cWithdrawn = 0;
@@ -39,6 +41,7 @@ public class Status {
 		cReOpen = 0;
 		cDemand = 0;
 		cNew = 0;
+		cRnDRejected = 0;
 	}
 
 	public void PriStatCounter(String priority, String status) {
@@ -74,6 +77,9 @@ public class Status {
 			if (status.equals("New")){
 				aNew++;
 			}
+			if (status.equals("R&D Rejected")){
+				aRnDRejected++;
+			}
 		}
 		
 		if (priority.equals("B-Minor")){
@@ -107,6 +113,9 @@ public class Status {
 			if (status.equals("New")){
 				bNew++;
 			}
+			if (status.equals("R&D Rejected")){
+				bRnDRejected++;
+			}
 		}
 		
 		if (priority.equals("C-Comment")){ // FIX IF NECESSARY!!!
@@ -139,6 +148,9 @@ public class Status {
 			}
 			if (status.equals("New")){
 				cNew++;
+			}
+			if (status.equals("R&D Rejected")){
+				cRnDRejected++;
 			}
 		}
 		
@@ -383,5 +395,30 @@ public class Status {
 	public void setcNew(int cNew) {
 		this.cNew = cNew;
 	}
+
+	public int getaRnDRejected() {
+		return aRnDRejected;
+	}
+
+	public void setaRnDRejected(int aRnDRejected) {
+		this.aRnDRejected = aRnDRejected;
+	}
+
+	public int getbRnDRejected() {
+		return bRnDRejected;
+	}
+
+	public void setbRnDRejected(int bRnDRejected) {
+		this.bRnDRejected = bRnDRejected;
+	}
+
+	public int getcRnDRejected() {
+		return cRnDRejected;
+	}
+
+	public void setcRnDRejected(int cRnDRejected) {
+		this.cRnDRejected = cRnDRejected;
+	}
+	
 	
 }

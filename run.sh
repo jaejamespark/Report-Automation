@@ -1,3 +1,2 @@
-javac -cp jxl.jar nvg/mm/td/ExtractData.java
-java -cp .:jxl.jar nvg.mm.td.ExtractData all_issues.xls
+java -jar ReportAutomation_ver1.8.jar all_issues.xls all_issues2.xls
 echo “hello world”

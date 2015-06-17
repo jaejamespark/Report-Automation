@@ -18,7 +18,10 @@ import jxl.write.biff.RowsExceededException;
 
 public class ExtractData {
 	public static void main(String[] args) throws RowsExceededException, WriteException {
-		
+	
+
+	boolean modelNameNdetInVerisMISMATCHED = false;
+	int modelNameNdetInVerMISMATCHCounter = 0;
 		/*
 			For Mac OSX, use the following lines in the command window.
 			
@@ -47,13 +50,13 @@ public class ExtractData {
 		
 		int inputCounter = 0;
 		for (inputCounter = 0; inputCounter < args.length; ++inputCounter){
-			System.out.println(args[inputCounter]);
+			//System.out.println(args[inputCounter]);
 			
 		
 			try {
 				// Read a workbook from a file
 				Workbook workbook = Workbook.getWorkbook(new File(inputDirectory, args[inputCounter]));
-				//Workbook workbook = Workbook.getWorkbook(new File("all_issues.xls")); // For testing only
+				//Workbook workbook = Workbook.getWorkbook(new File(inputDirectory, "all_issues2.xls")); // For testing only
 
 				// Read a sheet from the workbook
 				Sheet sheet = workbook.getSheet(0);
@@ -251,10 +254,20 @@ public class ExtractData {
 						for (int issueCounter = 0; issueCounter < issuesList.size(); ++issueCounter){
 							String DetectedInVer = verFinalList.get(verIdentifier);
 							if (DetectedInVer.equals(issuesList.get(issueCounter).getDetectedVer())) {
-								String Priority = issuesList.get(issueCounter).getPriority();
-								String Status = issuesList.get(issueCounter).getStatus();
-								detVerPriorityCounter.countDetectVer(modelCounter, verIdentifier, DetectedInVer, Priority, Status);
-								detVerStatusCounter.PriStatCounter(Priority, Status);
+								// because of possible tester's input error, the below line has been added. (case: model name is correct but detected in version is correct.)
+								if (issuesList.get(issueCounter).getModelIdentifier() == modelCounter){
+									
+									String Priority = issuesList.get(issueCounter).getPriority();
+									String Status = issuesList.get(issueCounter).getStatus();
+									detVerPriorityCounter.countDetectVer(modelCounter, verIdentifier, DetectedInVer, Priority, Status);
+									detVerStatusCounter.PriStatCounter(Priority, Status);
+								}
+								else {
+									// ERROR CASE: MODEL NAME & DETECTED IN VERSION MISMATCH 
+									modelNameNdetInVerisMISMATCHED = true;
+									modelNameNdetInVerMISMATCHCounter += 1;
+									// GET MORE SPECIFIC ERROR DATA LATER
+								}
 							}	
 						}
 						verPriorityList.add(detVerPriorityCounter);
@@ -365,7 +378,7 @@ public class ExtractData {
 					for (int issuesCounter = 0; issuesCounter < issuesList.size(); ++issuesCounter){
 						if (issuesList.get(issuesCounter).getModelIdentifier() == statusCounter + 1) {
 							String statusOpen = issuesList.get(issuesCounter).getStatus();
-							if (statusOpen.equals("New") || statusOpen.equals("Demand") || statusOpen.equals("ReOpen") || statusOpen.equals("Open") || statusOpen.equals("Assigned") || statusOpen.equals("Fixed")) {
+							if (statusOpen.equals("New") || statusOpen.equals("Demand") || statusOpen.equals("ReOpen") || statusOpen.equals("Open") || statusOpen.equals("Assigned") || statusOpen.equals("Fixed") || statusOpen.equals("R&D Rejected")) {
 								String tdNumOpen = issuesList.get(issuesCounter).getTdNum();
 								String priorityOpen = issuesList.get(issuesCounter).getPriority();
 								String summaryOpen = issuesList.get(issuesCounter).getSummary();
@@ -528,11 +541,12 @@ public class ExtractData {
 					System.out.println("A-Major New = " + listStatus.get(statusCounter).getaNew());
 					System.out.println("A-Major Open = " + listStatus.get(statusCounter).getaOpen());
 					System.out.println("A-Major ReOpen = " + listStatus.get(statusCounter).getaReOpen());
+					System.out.println("A-Major R&D rejected = " + listStatus.get(statusCounter).getaRnDRejected());
 					
 					//System.out.println("A-Major DEMAND NEW VER = " + finalVerList.get(statusCounter).getaDemand());			
 					
 					int numOpenAIssues = listStatus.get(statusCounter).getaReOpen() + listStatus.get(statusCounter).getaOpen() + listStatus.get(statusCounter).getaNew()
-							+ listStatus.get(statusCounter).getaAssigned() + listStatus.get(statusCounter).getaFixed() + listStatus.get(statusCounter).getaDemand();
+							+ listStatus.get(statusCounter).getaAssigned() + listStatus.get(statusCounter).getaFixed() + listStatus.get(statusCounter).getaDemand() + listStatus.get(statusCounter).getaRnDRejected();
 					System.out.println("A-Major TOTAL OPEN = " + numOpenAIssues);
 								
 					System.out.println(" ");
@@ -548,9 +562,10 @@ public class ExtractData {
 					System.out.println("B-Minor New = " + listStatus.get(statusCounter).getbNew());
 					System.out.println("B-Minor Open = " + listStatus.get(statusCounter).getbOpen());
 					System.out.println("B-Minor ReOpen = " + listStatus.get(statusCounter).getbReOpen());
+					System.out.println("B-Minor R&D rejected = " + listStatus.get(statusCounter).getbRnDRejected());
 					
 					int numOpenBIssues = listStatus.get(statusCounter).getbReOpen() + listStatus.get(statusCounter).getbOpen() + listStatus.get(statusCounter).getbNew()
-							+ listStatus.get(statusCounter).getbAssigned() + listStatus.get(statusCounter).getbFixed() + listStatus.get(statusCounter).getbDemand();
+							+ listStatus.get(statusCounter).getbAssigned() + listStatus.get(statusCounter).getbFixed() + listStatus.get(statusCounter).getbDemand() + listStatus.get(statusCounter).getbRnDRejected();
 					System.out.println("B-Minor TOTAL OPEN = " + numOpenBIssues);
 					
 					System.out.println(" ");
@@ -566,9 +581,10 @@ public class ExtractData {
 					System.out.println("C-Comment New = " + listStatus.get(statusCounter).getcNew());
 					System.out.println("C-Comment Open = " + listStatus.get(statusCounter).getcOpen());
 					System.out.println("C-Comment ReOpen = " + listStatus.get(statusCounter).getcReOpen());
+					System.out.println("C-Comment R&D rejected = " + listStatus.get(statusCounter).getcRnDRejected());
 					
 					int numOpenCIssues = listStatus.get(statusCounter).getcReOpen() + listStatus.get(statusCounter).getcOpen() + listStatus.get(statusCounter).getcNew()
-							+ listStatus.get(statusCounter).getcAssigned() + listStatus.get(statusCounter).getcFixed() + listStatus.get(statusCounter).getcDemand();
+							+ listStatus.get(statusCounter).getcAssigned() + listStatus.get(statusCounter).getcFixed() + listStatus.get(statusCounter).getcDemand() + listStatus.get(statusCounter).getcRnDRejected();
 					System.out.println("C-Comment TOTAL OPEN = " + numOpenCIssues);
 					
 					System.out.println(" ");
@@ -714,8 +730,28 @@ public class ExtractData {
 				workbookOutput.write();
 				workbookOutput.close();
 
+				/* FOR DEBUG
+				int modelID = 1;
+				for (int a = 0; a < issuesList.size(); ++ a){
+					//System.out.println("before loop : " +issuesList.get(a).getModel());
+					if (issuesList.get(a).getModelIdentifier() == modelID){
+						System.out.println(" in loop " + issuesList.get(a).getModel());
+						//System.out.println("hello yo");
+					}
+					else {
+						System.out.println("Else : " +issuesList.get(a).getModel());
+					}
+				}
+				*/
 				
 				System.out.println("end");
+				System.out.println("");
+				
+				if (modelNameNdetInVerisMISMATCHED == true){
+					System.out.println("Warning: Possible wrong data from TD. Model name and Detected in version NOT MATCHED");
+					System.out.println("Number of mismatch occured in this file is " + modelNameNdetInVerMISMATCHCounter);
+				}
+
 				
 			} catch (BiffException e) {
 				// TODO Auto-generated catch block
